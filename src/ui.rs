@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap, canvas::*},
+    widgets::{canvas::*, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
 
@@ -25,12 +25,9 @@ pub fn ui(f: &mut Frame) {
 
     f.render_widget(title, chunks[0]);
 
-
     let ground = Canvas::default()
-        .background_color(White)
-        .block(
-            Block::new(),
-        )
+        .background_color(Color::White)
+        .block(Block::new());
 
     f.render_widget(ground, chunks[2]);
 }
