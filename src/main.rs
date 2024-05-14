@@ -11,7 +11,7 @@ use ratatui::{
 };
 
 mod ui;
-use crate::ui::{ui, Player};
+use crate::ui::{ui, Ground, Midde, Player};
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -21,7 +21,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend)?;
-    let mut player = Player { x: 12.0, y: 12.0 };
+    let mut player = Player {
+        x: 12.0,
+        y: 12.0,
+        dy: -1.0,
+    };
 
     let _res = run_app(&mut terminal, &mut player);
     disable_raw_mode()?;
@@ -38,14 +42,26 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::Result<bool> {
-    loop {
-        terminal.draw(|f| ui(f, player))?;
+    //test ground level vector
+    let mut v = std::iter::repeat_with(|| Ground { x: 1.0, hight: 2 })
+        .take(30)
+        .collect::<Vec<_>>();
 
+    //test mid level
+    let mut m = std::iter::repeat_with(|| Midde { x: 1.0, level: 6 })
+        .take(30)
+        .collect::<Vec<_>>();
+
+    loop {
+        terminal.draw(|f| ui(f, player, &mut v, &mut m))?;
+
+        player.drop_down();
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
                 // Skip events that are not KeyEventKind::Press
                 continue;
             }
+
             match key.code {
                 KeyCode::Char('q') => {
                     return Ok(true);
@@ -57,13 +73,17 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     player.x -= 1.0;
                 }
                 KeyCode::Up => {
-                    player.y += 1.0;
+                    player.dy = 1.0;
                 }
                 KeyCode::Down => {
-                    player.y -= 1.0;
+                    player.dy = -1.0;
                 }
                 _ => {}
             }
         }
     }
+}
+
+fn on_block() -> bool {
+    return false;
 }
