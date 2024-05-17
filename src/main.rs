@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut player = Player {
         x: 12.0,
         y: 12.0,
-        dy: -1.0,
+        dy: -0.0,
     };
 
     let _res = run_app(&mut terminal, &mut player);
@@ -67,16 +67,28 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     return Ok(true);
                 }
                 KeyCode::Right => {
-                    player.x += 1.0;
+                    if !on_block(player, &v) {
+                        player.x += 1.0;
+                    }
                 }
                 KeyCode::Left => {
-                    player.x -= 1.0;
+                    if !on_block(player, &v) {
+                        player.x -= 1.0;
+                    }
                 }
                 KeyCode::Up => {
-                    player.dy = 1.0;
+                    if !on_block(player, &v) {
+                        player.y += 1.0;
+                    } else {
+                        player.y = -60.0;
+                    }
                 }
                 KeyCode::Down => {
-                    player.dy = -1.0;
+                    if !on_block(player, &v) {
+                        player.y -= 1.0;
+                    } else {
+                        player.y = -60.0;
+                    }
                 }
                 _ => {}
             }
@@ -84,6 +96,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
     }
 }
 
-fn on_block() -> bool {
+fn on_block(player: &mut Player, ground: &[Ground]) -> bool {
+    for i in ground {
+        if ((player.x) >= i.x && player.x <= (i.x + 20.0))
+            && (player.y >= -85.0 && player.y <= (i.hight as f64 * 10.0 - 85.0))
+        {
+            return true;
+        }
+    }
     return false;
 }

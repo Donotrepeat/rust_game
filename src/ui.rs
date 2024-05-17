@@ -1,5 +1,6 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
+    prelude::*,
     style::{Color, Style},
     text::{Line, Span, Text},
     widgets::{canvas::*, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
@@ -32,18 +33,23 @@ pub fn ui(f: &mut Frame, player: &Player, ground: &mut [Ground], middel: &mut [M
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(2),
+            Constraint::Length(4),
             Constraint::Min(1),
             Constraint::Length(5),
         ])
         .split(f.size());
 
+    let counter_text = Text::from(vec![Line::from(vec![
+        "Value: ".into(),
+        player.x.to_string().yellow(),
+        player.y.to_string().yellow(),
+    ])]);
+
     let title_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default());
 
-    let title = Paragraph::new(Text::styled("Game test", Style::default().fg(Color::Gray)))
-        .block(title_block);
+    let title = Paragraph::new(counter_text).centered().block(title_block);
 
     f.render_widget(title, chunks[0]);
 
@@ -66,7 +72,7 @@ pub fn ui(f: &mut Frame, player: &Player, ground: &mut [Ground], middel: &mut [M
 
             for i in &*ground {
                 ctx.draw(&Rectangle {
-                    x: -170.0 + i.x * 10.0,
+                    x: i.x * 10.0,
                     y: -90.0,
                     width: 10.0,
                     height: 10.0 * i.hight as f64,
@@ -77,7 +83,7 @@ pub fn ui(f: &mut Frame, player: &Player, ground: &mut [Ground], middel: &mut [M
             for i in &*middel {
                 ctx.draw(&Rectangle {
                     x: -170.0 + i.x * 10.0,
-                    y: -60.0 + i.level as f64 * 10.0,
+                    y: -90.0 + i.level as f64 * 10.0,
                     width: 10.0,
                     height: 10.0,
                     color: Color::Cyan,
