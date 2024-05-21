@@ -3,7 +3,9 @@ use std::{error::Error, io};
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{
+        disable_raw_mode, enable_raw_mode, window_size, EnterAlternateScreen, LeaveAlternateScreen,
+    },
 };
 use ratatui::{
     backend::{Backend, CrosstermBackend},
@@ -47,6 +49,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
         .take(30)
         .collect::<Vec<_>>();
 
+    for i in 0..30 {
+        v[i].x = -180.0 + 10.0 * v[i].x * i as f64;
+    }
+
     //test mid level
     let mut m = std::iter::repeat_with(|| Midde { x: 1.0, level: 6 })
         .take(30)
@@ -67,27 +73,23 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     return Ok(true);
                 }
                 KeyCode::Right => {
-                    if !on_block(player, &v) {
+                    if !nextto_block(player, &v) {
                         player.x += 1.0;
                     }
                 }
                 KeyCode::Left => {
-                    if !on_block(player, &v) {
+                    if !nextto_block(player, &v) {
                         player.x -= 1.0;
                     }
                 }
                 KeyCode::Up => {
                     if !on_block(player, &v) {
                         player.y += 1.0;
-                    } else {
-                        player.y = -60.0;
                     }
                 }
                 KeyCode::Down => {
                     if !on_block(player, &v) {
                         player.y -= 1.0;
-                    } else {
-                        player.y = -60.0;
                     }
                 }
                 _ => {}
@@ -98,9 +100,27 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
 
 fn on_block(player: &mut Player, ground: &[Ground]) -> bool {
     for i in ground {
-        if ((player.x) >= i.x && player.x <= (i.x + 20.0))
+        if ((player.x) >= i.x && player.x <= (i.x + 15.0))
             && (player.y >= -85.0 && player.y <= (i.hight as f64 * 10.0 - 85.0))
         {
+            player.y = i.hight as f64 * 10.0 - 84.0;
+            player.dy = 0.0;
+            return true;
+        }
+    }
+    return false;
+}
+
+fn nextto_block(player: &mut Player, ground: &[Ground]) -> bool {
+    for i in ground {
+        if ((player.x) >= (i.x - 5.0) && player.x <= (i.x + 15.0))
+            && (player.y >= -85.0 && player.y <= (i.hight as f64 * 10.0 - 85.0))
+        {
+            if (player.x - (i.x - 5.0)) < ((i.x + 15.0) - player.x) {
+                player.x = i.x - 6.0;
+            } else if (player.x - (i.x - 5.0)) >= ((i.x + 15.0) - player.x) {
+                player.x = i.x + 16.0;
+            }
             return true;
         }
     }
