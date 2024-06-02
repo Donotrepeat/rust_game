@@ -82,7 +82,7 @@ pub fn ui(f: &mut Frame, player: &Player, ground: &mut [Ground], middel: &mut [M
 
             for i in &*middel {
                 ctx.draw(&Rectangle {
-                    x: -170.0 + i.x * 10.0,
+                    x: i.x,
                     y: -90.0 + i.level as f64 * 10.0,
                     width: 10.0,
                     height: 10.0,

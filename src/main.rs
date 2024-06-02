@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::Result<bool> {
     //test ground level vector
-    let mut v = std::iter::repeat_with(|| Ground { x: 1.0, hight: 2 })
+    let mut v = std::iter::repeat_with(|| Ground { x: 1.0, hight: 3 })
         .take(30)
         .collect::<Vec<_>>();
 
@@ -73,22 +73,22 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     return Ok(true);
                 }
                 KeyCode::Right => {
-                    if !nextto_block(player, &v) {
+                    if !nextto_block(player, &v) && !nextto_block_m(player, &m) {
                         player.x += 1.0;
                     }
                 }
                 KeyCode::Left => {
-                    if !nextto_block(player, &v) {
+                    if !nextto_block(player, &v) && !nextto_block_m(player, &m) {
                         player.x -= 1.0;
                     }
                 }
                 KeyCode::Up => {
-                    if !on_block(player, &v) {
+                    if !on_block(player, &v) && !on_block_m(player, &m) {
                         player.y += 1.0;
                     }
                 }
                 KeyCode::Down => {
-                    if !on_block(player, &v) {
+                    if !on_block(player, &v) && !on_block_m(player, &m) {
                         player.y -= 1.0;
                     }
                 }
@@ -115,6 +115,41 @@ fn nextto_block(player: &mut Player, ground: &[Ground]) -> bool {
     for i in ground {
         if ((player.x) >= (i.x - 5.0) && player.x <= (i.x + 15.0))
             && (player.y >= -85.0 && player.y <= (i.hight as f64 * 10.0 - 85.0))
+        {
+            if (player.x - (i.x - 5.0)) < ((i.x + 15.0) - player.x) {
+                player.x = i.x - 6.0;
+            } else if (player.x - (i.x - 5.0)) >= ((i.x + 15.0) - player.x) {
+                player.x = i.x + 16.0;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+fn on_block_m(player: &mut Player, ground: &[Midde]) -> bool {
+    for i in ground {
+        if ((player.x) >= i.x && player.x <= (i.x + 15.0))
+            && (player.y >= (i.level as f64 * 10.0 - 95.0)
+                && player.y <= (i.level as f64 * 10.0 - 75.0))
+        {
+            if player.y > (i.level as f64 * 10.0 - 90.0) {
+                player.y += 1.0;
+            } else if player.y <= (i.level as f64 * 10.0 - 90.0) {
+                player.y -= 1.0;
+            }
+
+            player.dy = 0.0;
+            return true;
+        }
+    }
+    return false;
+}
+
+fn nextto_block_m(player: &mut Player, ground: &[Midde]) -> bool {
+    for i in ground {
+        if ((player.x) >= (i.x - 5.0) && player.x <= (i.x + 15.0))
+            && (player.y >= (i.level as f64 * 10.0 - 85.0)
+                && player.y <= (i.level as f64 * 10.0 - 75.0))
         {
             if (player.x - (i.x - 5.0)) < ((i.x + 15.0) - player.x) {
                 player.x = i.x - 6.0;
