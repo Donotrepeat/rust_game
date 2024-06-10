@@ -99,7 +99,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
             }
         }
 
-        player.drop_down();
+        if !on_block(player, &v) && !on_block_m(player, &m) {
+            player.drop_down();
+        }
     }
 }
 
