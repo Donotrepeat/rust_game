@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend)?;
     let mut player = Player {
-        x: 12.0,
+        x: -120.0,
         y: 12.0,
         dy: -0.0,
     };
@@ -51,6 +51,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
 
     for i in 0..30 {
         v[i].x = -180.0 + 10.0 * v[i].x * i as f64;
+        v[i].hight = i as u8;
     }
 
     //test mid level
@@ -83,14 +84,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                 }
                 KeyCode::Up => {
                     if !on_block(player, &v) && !on_block_m(player, &m) {
-                        player.dy += 0.2;
+                        player.dy = 0.2;
                     } else {
                         player.dy = 0.0;
                     }
                 }
                 KeyCode::Down => {
                     if !on_block(player, &v) && !on_block_m(player, &m) {
-                        player.dy -= 0.2;
+                        player.dy = -0.2;
                     } else {
                         player.dy = 0.0;
                     }
