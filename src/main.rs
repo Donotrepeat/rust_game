@@ -61,7 +61,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
     loop {
         terminal.draw(|f| ui(f, player, &mut v, &mut m))?;
 
-        player.drop_down();
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
                 // Skip events that are not KeyEventKind::Press
@@ -84,17 +83,23 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                 }
                 KeyCode::Up => {
                     if !on_block(player, &v) && !on_block_m(player, &m) {
-                        player.y += 1.0;
+                        player.dy += 0.2;
+                    } else {
+                        player.dy = 0.0;
                     }
                 }
                 KeyCode::Down => {
                     if !on_block(player, &v) && !on_block_m(player, &m) {
-                        player.y -= 1.0;
+                        player.dy -= 0.2;
+                    } else {
+                        player.dy = 0.0;
                     }
                 }
                 _ => {}
             }
         }
+
+        player.drop_down();
     }
 }
 
