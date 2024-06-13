@@ -58,6 +58,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
     let mut m = std::iter::repeat_with(|| Midde { x: 1.0, level: 6 })
         .take(30)
         .collect::<Vec<_>>();
+    let mut count = 0;
+    let mut jump = true;
+    let mut jump_count = 0;
 
     loop {
         terminal.draw(|f| ui(f, player, &mut v, &mut m))?;
@@ -83,26 +86,34 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     }
                 }
                 KeyCode::Up => {
-                    if !on_block(player, &v) && !on_block_m(player, &m) {
-                        player.dy = 0.2;
+                    if !on_block(player, &v) && !on_block_m(player, &m) && jump == false {
+                        player.dy = 2.0;
+                        jump = true;
+                        jump_count = count;
                     } else {
                         player.dy = 0.0;
                     }
                 }
                 KeyCode::Down => {
                     if !on_block(player, &v) && !on_block_m(player, &m) {
-                        player.dy = -0.2;
+                        player.dy = -2.0;
                     } else {
                         player.dy = 0.0;
                     }
                 }
                 _ => {}
             }
+            if jump == true && (count - jump_count) >= 5 {
+                jump = false;
+                player.dy = -2.0;
+            }
         }
 
         if !on_block(player, &v) && !on_block_m(player, &m) {
             player.drop_down();
         }
+
+        count += 1;
     }
 }
 
