@@ -1,9 +1,9 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout},
     prelude::*,
     style::{Color, Style},
-    text::{Line, Span, Text},
-    widgets::{canvas::*, Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
+    text::{Line, Text},
+    widgets::{canvas::*, Block, Borders, Paragraph},
     Frame,
 };
 #[derive(Debug)]
@@ -19,14 +19,22 @@ impl Player {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Ground {
     pub x: f64,
     pub hight: u8,
 }
 
+#[derive(Copy, Clone)]
 pub struct Midde {
     pub x: f64,
     pub level: u8,
+}
+
+#[derive(Clone)]
+pub struct Level {
+    pub ground: Vec<Ground>,
+    pub middle: Vec<Midde>,
 }
 
 pub fn ui(f: &mut Frame, player: &Player, ground: &mut [Ground], middel: &mut [Midde]) {

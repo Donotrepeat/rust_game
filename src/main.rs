@@ -1,11 +1,9 @@
 use std::{error::Error, io};
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
-    terminal::{
-        disable_raw_mode, enable_raw_mode, window_size, EnterAlternateScreen, LeaveAlternateScreen,
-    },
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
     backend::{Backend, CrosstermBackend},
@@ -13,7 +11,7 @@ use ratatui::{
 };
 
 mod ui;
-use crate::ui::{ui, Ground, Midde, Player};
+use crate::ui::{ui, Ground, Level, Midde, Player};
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -55,15 +53,24 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
     }
 
     //test mid level
-    let mut m = std::iter::repeat_with(|| Midde { x: 1.0, level: 6 })
+    let m = std::iter::repeat_with(|| Midde { x: 1.0, level: 6 })
         .take(30)
         .collect::<Vec<_>>();
     let mut count = 0;
     let mut jump = true;
     let mut jump_count = 0;
+    let mut level_index = 0;
+
+    let mut level = Level {
+        ground: v,
+        middle: m,
+    };
+    let array: [Level; 3] = [level.clone(), level.clone(), level.clone()];
 
     loop {
-        terminal.draw(|f| ui(f, player, &mut v, &mut m))?;
+        terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
+
+        let current_level = &array[level_index];
 
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
@@ -76,17 +83,24 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     return Ok(true);
                 }
                 KeyCode::Right => {
-                    if !nextto_block(player, &v) && !nextto_block_m(player, &m) {
+                    if !nextto_block(player, &current_level.ground)
+                        && !nextto_block_m(player, &current_level.middle)
+                    {
                         player.x += 1.0;
                     }
                 }
                 KeyCode::Left => {
-                    if !nextto_block(player, &v) && !nextto_block_m(player, &m) {
+                    if !nextto_block(player, &current_level.ground)
+                        && !nextto_block_m(player, &current_level.middle)
+                    {
                         player.x -= 1.0;
                     }
                 }
                 KeyCode::Up => {
-                    if !on_block(player, &v) && !on_block_m(player, &m) && jump == false {
+                    if !on_block(player, &current_level.ground)
+                        && !on_block_m(player, &current_level.middle)
+                        && jump == false
+                    {
                         player.dy = 2.0;
                         jump = true;
                         jump_count = count;
@@ -95,7 +109,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     }
                 }
                 KeyCode::Down => {
-                    if !on_block(player, &v) && !on_block_m(player, &m) {
+                    if !on_block(player, &current_level.ground)
+                        && !on_block_m(player, &current_level.middle)
+                    {
                         player.dy = -2.0;
                     } else {
                         player.dy = 0.0;
@@ -108,8 +124,15 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                 player.dy = -2.0;
             }
         }
+        if player.x <= -180.0 {
+            return Ok(true);
+        }
 
-        if !on_block(player, &v) && !on_block_m(player, &m) {
+        if player.x >= 180.0 {
+            level_index += 1;
+        }
+
+        if !on_block(player, &current_level.ground) && !on_block_m(player, &current_level.middle) {
             player.drop_down();
         }
 
