@@ -44,10 +44,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::Result<bool> {
     //test ground level vector
     let mut v = std::iter::repeat_with(|| Ground { x: 1.0, hight: 3 })
-        .take(30)
+        .take(10)
         .collect::<Vec<_>>();
 
-    for i in 0..30 {
+    for i in 0..10 {
         v[i].x = -180.0 + 10.0 * v[i].x * i as f64;
         v[i].hight = i as u8;
     }
@@ -130,6 +130,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
 
         if player.x >= 180.0 {
             level_index += 1;
+            player.x = -170.0;
         }
 
         if !on_block(player, &current_level.ground) && !on_block_m(player, &current_level.middle) {
