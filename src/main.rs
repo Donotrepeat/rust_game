@@ -1,10 +1,11 @@
 use std::{error::Error, io};
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use futures::{FutureExt, StreamExt};
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -13,7 +14,8 @@ use ratatui::{
 mod ui;
 use crate::ui::{ui, Ground, Level, Midde, Player};
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
 
     let mut stderr = io::stderr();
@@ -27,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         dy: -0.0,
     };
 
-    let _res = run_app(&mut terminal, &mut player);
+    let _res = run_app(&mut terminal, &mut player).await;
     disable_raw_mode()?;
 
     execute!(
@@ -41,7 +43,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::Result<bool> {
+async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::Result<bool> {
     //test ground level vector
     let mut v = std::iter::repeat_with(|| Ground { x: 1.0, hight: 3 })
         .take(10)
@@ -67,18 +69,17 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
     };
     let array: [Level; 3] = [level.clone(), level.clone(), level.clone()];
 
+    let mut reader = event::EventStream::new();
+
     loop {
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
+        let mut event = reader.next().fuse();
+
         let current_level = &array[level_index];
 
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
-                // Skip events that are not KeyEventKind::Press
-                continue;
-            }
-
-            match key.code {
+        match event {
+            Event::Key(key) => match key.code {
                 KeyCode::Char('q') => {
                     return Ok(true);
                 }
@@ -118,12 +119,15 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) -> io::R
                     }
                 }
                 _ => {}
-            }
-            if jump == true && (count - jump_count) >= 5 {
-                jump = false;
-                player.dy = -2.0;
-            }
+            },
+            _ => {}
         }
+
+        if jump == true && (count - jump_count) >= 5 {
+            jump = false;
+            player.dy = -2.0;
+        }
+
         if player.x <= -180.0 {
             return Ok(true);
         }
