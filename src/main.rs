@@ -1,5 +1,6 @@
 use std::{error::Error, io};
 
+use color_eyre::eyre::Ok;
 use crossterm::{
     event::{self, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -10,6 +11,7 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
+use tokio::fs::rename;
 
 mod ui;
 use crate::ui::{ui, Ground, Level, Midde, Player};
@@ -74,54 +76,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
     loop {
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
-        let mut event = reader.next().fuse();
-
         let current_level = &array[level_index];
-
-        match event {
-            Event::Key(key) => match key.code {
-                KeyCode::Char('q') => {
-                    return Ok(true);
-                }
-                KeyCode::Right => {
-                    if !nextto_block(player, &current_level.ground)
-                        && !nextto_block_m(player, &current_level.middle)
-                    {
-                        player.x += 1.0;
-                    }
-                }
-                KeyCode::Left => {
-                    if !nextto_block(player, &current_level.ground)
-                        && !nextto_block_m(player, &current_level.middle)
-                    {
-                        player.x -= 1.0;
-                    }
-                }
-                KeyCode::Up => {
-                    if !on_block(player, &current_level.ground)
-                        && !on_block_m(player, &current_level.middle)
-                        && jump == false
-                    {
-                        player.dy = 2.0;
-                        jump = true;
-                        jump_count = count;
-                    } else {
-                        player.dy = 0.0;
-                    }
-                }
-                KeyCode::Down => {
-                    if !on_block(player, &current_level.ground)
-                        && !on_block_m(player, &current_level.middle)
-                    {
-                        player.dy = -2.0;
-                    } else {
-                        player.dy = 0.0;
-                    }
-                }
-                _ => {}
-            },
-            _ => {}
-        }
 
         if jump == true && (count - jump_count) >= 5 {
             jump = false;
@@ -207,4 +162,85 @@ fn nextto_block_m(player: &mut Player, ground: &[Midde]) -> bool {
         }
     }
     return false;
+}
+
+async fn get_input<B: Backend>(
+    current_level: &mut Level,
+    terminal: &mut Terminal<B>,
+    player: &mut Player,
+) -> io::Result<bool> {
+    let event = reader.next().fuse();
+    tokio::select! {
+
+            maybe_event = event =>{
+                match maybe_event {
+                    Some(Ok(evt)) =>{
+                        match evt {
+                            Event::Key(key) => match key.code {
+                                KeyCode::Char('q') => {
+                                    return Ok(true);
+                                }
+                                KeyCode::Right => {
+                                    if !nextto_block(player, &current_level.ground)
+                                        && !nextto_block_m(player, &current_level.middle)
+                                    {
+                                        player.x += 1.0;
+                                        return Ok(false);
+                                    } else {
+                                        return Ok(false);
+                                    }
+                                }
+                                KeyCode::Left => {
+                                    if !nextto_block(player, &current_level.ground)
+                                        && !nextto_block_m(player, &current_level.middle)
+                                    {
+                                        player.x -= 1.0;
+                                        return Ok(false);
+
+                                    } else {
+                                        return Ok(false);
+                                    }
+                                }
+                                KeyCode::Up => {
+                                    if !on_block(player, &current_level.ground)
+                                        && !on_block_m(player, &current_level.middle)
+                                    {
+
+                                        return Ok(false);
+
+                                    } else {
+                                        player.dy = 0.0;
+                                        return Ok(false);
+
+                                    }
+                                }
+                                KeyCode::Down => {
+                                    if !on_block(player, &current_level.ground)
+                                        && !on_block_m(player, &current_level.middle)
+                                    {
+
+                                        player.dy = -2.0;
+                                        return Ok(false);
+
+                                    } else {
+                                        player.dy = 0.0;
+                                        return Ok(false);
+
+                                    }
+                                }
+                                _ => {return Ok(false);
+                                }
+
+                            }
+                            _ => {return Ok(false)
+    }
+                        }
+                    },
+            _ => {return Ok(false)
+    }
+                }
+
+
+            }
+        }
 }
