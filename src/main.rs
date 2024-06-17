@@ -1,6 +1,5 @@
 use std::{error::Error, io};
 
-use color_eyre::eyre::Ok;
 use crossterm::{
     event::{self, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
@@ -71,12 +70,18 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
     };
     let array: [Level; 3] = [level.clone(), level.clone(), level.clone()];
 
-    let mut reader = event::EventStream::new();
-
     loop {
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
         let current_level = &array[level_index];
+        let back = get_input(&current_level, terminal, player).await;
+        if let Ok(test) = back {
+            if test {
+                return Ok(true);
+            }
+        } else if let Err(_err) = back {
+            println!("hello");
+        }
 
         if jump == true && (count - jump_count) >= 5 {
             jump = false;
@@ -165,10 +170,11 @@ fn nextto_block_m(player: &mut Player, ground: &[Midde]) -> bool {
 }
 
 async fn get_input<B: Backend>(
-    current_level: &mut Level,
-    terminal: &mut Terminal<B>,
+    current_level: &Level,
+    _terminal: &mut Terminal<B>,
     player: &mut Player,
 ) -> io::Result<bool> {
+    let mut reader = crossterm::event::EventStream::new();
     let event = reader.next().fuse();
     tokio::select! {
 
@@ -229,7 +235,7 @@ async fn get_input<B: Backend>(
                                     }
                                 }
                                 _ => {return Ok(false);
-                                }
+    }
 
                             }
                             _ => {return Ok(false)
