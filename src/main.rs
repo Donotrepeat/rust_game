@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut player = Player {
         x: -120.0,
         y: 12.0,
-        dy: -0.0,
+        dy: -5.0,
     };
 
     let _res = run_app(&mut terminal, &mut player).await;
@@ -74,12 +74,16 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
         let current_level = &array[level_index];
-        let back = get_input(&current_level, terminal, player).await;
-        if let Ok(test) = back {
+
+        let handle = tokio::spawn(async {
+            return get_input(&current_level, terminal, player);
+        });
+        let out = handle.await.unwrap();
+        if let Ok(test) = out {
             if test {
                 return Ok(true);
             }
-        } else if let Err(_err) = back {
+        } else if let Err(_err) = out {
             println!("hello");
         }
 
