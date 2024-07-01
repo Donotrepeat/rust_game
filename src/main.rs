@@ -1,4 +1,8 @@
-use std::{error::Error, io};
+use std::{
+    error::Error,
+    io,
+    time::{Duration, Instant},
+};
 
 use crossterm::{
     event::{self, read, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -10,7 +14,8 @@ use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
 };
-use tokio::fs::rename;
+
+use tokio::time::{self, interval};
 
 mod ui;
 use crate::ui::{ui, Ground, Level, Midde, Player};
@@ -70,22 +75,62 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
     };
     let array: [Level; 3] = [level.clone(), level.clone(), level.clone()];
 
+    let tick_rate = Duration::from_millis(250);
+    let mut last_tick = Instant::now();
+
+    let mut interval = interval(tick_rate);
+
     loop {
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
         let current_level = &array[level_index];
 
-        let handle = tokio::spawn(async {
-            return get_input(&current_level, terminal, player);
-        });
-        let out = handle.await.unwrap();
-        if let Ok(test) = out {
-            if test {
-                return Ok(true);
+        let timeout = tick_rate
+            .checked_sub(last_tick.elapsed())
+            .unwrap_or_else(|| Duration::from_secs(0));
+
+        if crossterm::event::poll(timeout)? {
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char('q') => return Ok(true),
+                    KeyCode::Up => {
+                        if !nextto_block(player, &current_level.ground)
+                            && !nextto_block_m(player, &current_level.middle)
+                        {
+                            player.dy = 1.0;
+                            jump = true;
+                        }
+                    }
+                    KeyCode::Down => {
+                        if !on_block(player, &current_level.ground)
+                            && !on_block_m(player, &current_level.middle)
+                        {
+                            player.dy = -2.0;
+                        }
+                    }
+                    KeyCode::Right => {
+                        if !nextto_block(player, &current_level.ground)
+                            && !nextto_block_m(player, &current_level.middle)
+                        {
+                            player.x += 1.0;
+                        }
+                    }
+                    KeyCode::Left => {
+                        if !nextto_block(player, &current_level.ground)
+                            && !nextto_block_m(player, &current_level.middle)
+                        {
+                            player.x -= 1.0;
+                        }
+                    }
+                    _ => {}
+                }
             }
-        } else if let Err(_err) = out {
-            println!("hello");
         }
+
+        if last_tick.elapsed() >= tick_rate {
+            last_tick = Instant::now();
+        }
+        interval.tick().await;
 
         if jump == true && (count - jump_count) >= 5 {
             jump = false;
@@ -171,86 +216,4 @@ fn nextto_block_m(player: &mut Player, ground: &[Midde]) -> bool {
         }
     }
     return false;
-}
-
-async fn get_input<B: Backend>(
-    current_level: &Level,
-    _terminal: &mut Terminal<B>,
-    player: &mut Player,
-) -> io::Result<bool> {
-    let mut reader = crossterm::event::EventStream::new();
-    let event = reader.next().fuse();
-    tokio::select! {
-
-            maybe_event = event =>{
-                match maybe_event {
-                    Some(Ok(evt)) =>{
-                        match evt {
-                            Event::Key(key) => match key.code {
-                                KeyCode::Char('q') => {
-                                    return Ok(true);
-                                }
-                                KeyCode::Right => {
-                                    if !nextto_block(player, &current_level.ground)
-                                        && !nextto_block_m(player, &current_level.middle)
-                                    {
-                                        player.x += 1.0;
-                                        return Ok(false);
-                                    } else {
-                                        return Ok(false);
-                                    }
-                                }
-                                KeyCode::Left => {
-                                    if !nextto_block(player, &current_level.ground)
-                                        && !nextto_block_m(player, &current_level.middle)
-                                    {
-                                        player.x -= 1.0;
-                                        return Ok(false);
-
-                                    } else {
-                                        return Ok(false);
-                                    }
-                                }
-                                KeyCode::Up => {
-                                    if !on_block(player, &current_level.ground)
-                                        && !on_block_m(player, &current_level.middle)
-                                    {
-
-                                        return Ok(false);
-
-                                    } else {
-                                        player.dy = 0.0;
-                                        return Ok(false);
-
-                                    }
-                                }
-                                KeyCode::Down => {
-                                    if !on_block(player, &current_level.ground)
-                                        && !on_block_m(player, &current_level.middle)
-                                    {
-
-                                        player.dy = -2.0;
-                                        return Ok(false);
-
-                                    } else {
-                                        player.dy = 0.0;
-                                        return Ok(false);
-
-                                    }
-                                }
-                                _ => {return Ok(false);
-    }
-
-                            }
-                            _ => {return Ok(false)
-    }
-                        }
-                    },
-            _ => {return Ok(false)
-    }
-                }
-
-
-            }
-        }
 }
