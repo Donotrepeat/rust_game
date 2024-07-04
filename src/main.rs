@@ -9,7 +9,6 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use futures::{FutureExt, StreamExt};
 use ratatui::{
     backend::{Backend, CrosstermBackend},
     Terminal,
@@ -75,10 +74,12 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
     };
     let array: [Level; 3] = [level.clone(), level.clone(), level.clone()];
 
-    let tick_rate = Duration::from_millis(250);
+    let tick_rate = Duration::from_millis(20);
     let mut last_tick = Instant::now();
 
     let mut interval = interval(tick_rate);
+
+    let mut can_jump = true;
 
     loop {
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
@@ -88,17 +89,19 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
             .unwrap_or_else(|| Duration::from_secs(0));
-
         if crossterm::event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') => return Ok(true),
                     KeyCode::Up => {
-                        if !nextto_block(player, &current_level.ground)
-                            && !nextto_block_m(player, &current_level.middle)
+                        if !on_block(player, &current_level.ground)
+                            && !on_block_m(player, &current_level.middle)
+                            && can_jump == true
                         {
-                            player.dy = 1.0;
+                            player.dy = 2.0;
                             jump = true;
+                            can_jump = false;
+                            jump_count = count;
                         }
                     }
                     KeyCode::Down => {
@@ -112,19 +115,22 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
                         if !nextto_block(player, &current_level.ground)
                             && !nextto_block_m(player, &current_level.middle)
                         {
-                            player.x += 1.0;
+                            player.x += 4.0;
                         }
                     }
                     KeyCode::Left => {
                         if !nextto_block(player, &current_level.ground)
                             && !nextto_block_m(player, &current_level.middle)
                         {
-                            player.x -= 1.0;
+                            player.x -= 4.0;
                         }
                     }
                     _ => {}
                 }
             }
+        }
+        if on_block(player, &current_level.ground) && on_block_m(player, &current_level.middle) {
+            can_jump = true;
         }
 
         if last_tick.elapsed() >= tick_rate {
@@ -132,7 +138,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
         }
         interval.tick().await;
 
-        if jump == true && (count - jump_count) >= 5 {
+        if jump == true && (count - jump_count) >= 15 {
             jump = false;
             player.dy = -2.0;
         }
