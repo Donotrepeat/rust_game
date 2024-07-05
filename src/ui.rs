@@ -67,7 +67,7 @@ pub fn ui(f: &mut Frame, player: &Player, ground: &mut [Ground], middel: &mut [M
             ctx.draw(&Circle {
                 x: player.x,
                 y: player.y,
-                radius: 5.0,
+                radius: 3.0,
                 color: Color::Red,
             });
             ctx.draw(&Rectangle {
