@@ -85,6 +85,12 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
         let current_level = &array[level_index];
+        if (on_block(player, &current_level.ground) || on_block_m(player, &current_level.middle))
+            && !can_jump
+        {
+            can_jump = true;
+            player.dy = 0.0;
+        }
 
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
@@ -96,7 +102,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
                     KeyCode::Up => {
                         if !on_block(player, &current_level.ground)
                             && !on_block_m(player, &current_level.middle)
-                            || can_jump == true
+                            || (can_jump == true) && !jump
                         {
                             player.dy = 2.0;
                             jump = true;
@@ -129,10 +135,6 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
                 }
             }
         }
-        if on_block(player, &current_level.ground) && on_block_m(player, &current_level.middle) {
-            can_jump = true;
-            player.dy = 0.0;
-        }
 
         if last_tick.elapsed() >= tick_rate {
             last_tick = Instant::now();
@@ -153,10 +155,11 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
             player.x = -170.0;
         }
 
-        if !on_block(player, &current_level.ground) && !on_block_m(player, &current_level.middle) {
-            player.drop_down();
-        }
-
+        // if !on_block(player, &current_level.ground) && !on_block_m(player, &current_level.middle) {
+        //     player.drop_down();
+        // }
+        //
+        player.drop_down();
         count += 1;
     }
 }
