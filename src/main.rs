@@ -85,7 +85,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
         let current_level = &array[level_index];
-        if (on_block(player, &current_level.ground) || on_block_m(player, &current_level.middle))
+        if (player.on_block(&current_level.ground) || player.on_block_m(&current_level.middle))
             && !can_jump
         {
             can_jump = true;
@@ -100,8 +100,8 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
                 match key.code {
                     KeyCode::Char('q') => return Ok(true),
                     KeyCode::Up => {
-                        if !on_block(player, &current_level.ground)
-                            && !on_block_m(player, &current_level.middle)
+                        if !player.on_block(&current_level.ground)
+                            && !player.on_block_m(&current_level.middle)
                             || (can_jump == true) && !jump
                         {
                             player.dy = 2.0;
@@ -111,22 +111,22 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
                         }
                     }
                     KeyCode::Down => {
-                        if !on_block(player, &current_level.ground)
-                            && !on_block_m(player, &current_level.middle)
+                        if !player.on_block(&current_level.ground)
+                            && !player.on_block_m(&current_level.middle)
                         {
                             player.dy = -2.0;
                         }
                     }
                     KeyCode::Right => {
-                        if !nextto_block(player, &current_level.ground)
-                            && !nextto_block_m(player, &current_level.middle)
+                        if !player.nextto_block(&current_level.ground)
+                            && !player.nextto_block_m(&current_level.middle)
                         {
                             player.x += 1.0;
                         }
                     }
                     KeyCode::Left => {
-                        if !nextto_block(player, &current_level.ground)
-                            && !nextto_block_m(player, &current_level.middle)
+                        if !player.nextto_block(&current_level.ground)
+                            && !player.nextto_block_m(&current_level.middle)
                         {
                             player.x -= 1.0;
                         }
@@ -159,70 +159,7 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
         //     player.drop_down();
         // }
         //
-        player.drop_down();
+        player.drop_down(&current_level.ground, &current_level.middle);
         count += 1;
     }
-}
-
-fn on_block(player: &mut Player, ground: &[Ground]) -> bool {
-    for i in ground {
-        if ((player.x) >= (i.x - 3.0) && player.x <= (i.x + 10.0))
-            && (player.y >= -85.0 && player.y <= (i.hight as f64 * 10.0 - 85.0))
-        {
-            player.y = i.hight as f64 * 10.0 - 85.0;
-            return true;
-        }
-    }
-    return false;
-}
-
-fn nextto_block(player: &mut Player, ground: &[Ground]) -> bool {
-    for i in ground {
-        if ((player.x) >= (i.x - 3.0) && player.x <= (i.x + 13.0))
-            && (player.y >= -85.0 && player.y <= (i.hight as f64 * 10.0 - 70.0))
-        {
-            if (player.x - (i.x - 3.0)).abs() < (player.x - (i.x + 13.0)).abs() {
-                player.x = i.x - 3.0;
-            } else if (player.x - (i.x - 3.0)).abs() >= (player.x - (i.x + 13.0)).abs() {
-                player.x = i.x + 13.0;
-            }
-            return true;
-        }
-    }
-    return false;
-}
-fn on_block_m(player: &mut Player, ground: &[Midde]) -> bool {
-    for i in ground {
-        if ((player.x) >= i.x && player.x <= (i.x + 15.0))
-            && (player.y >= (i.level as f64 * 10.0 - 95.0)
-                && player.y <= (i.level as f64 * 10.0 - 75.0))
-        {
-            if player.y > (i.level as f64 * 10.0 - 90.0) {
-                player.y += 1.0;
-            } else if player.y <= (i.level as f64 * 10.0 - 90.0) {
-                player.y -= 1.0;
-            }
-
-            player.dy = 0.0;
-            return true;
-        }
-    }
-    return false;
-}
-
-fn nextto_block_m(player: &mut Player, ground: &[Midde]) -> bool {
-    for i in ground {
-        if ((player.x) >= (i.x - 5.0) && player.x <= (i.x + 15.0))
-            && (player.y >= (i.level as f64 * 10.0 - 85.0)
-                && player.y <= (i.level as f64 * 10.0 - 75.0))
-        {
-            if (player.x - (i.x - 5.0)) < ((i.x + 15.0) - player.x) {
-                player.x = i.x - 6.0;
-            } else if (player.x - (i.x - 5.0)) >= ((i.x + 15.0) - player.x) {
-                player.x = i.x + 16.0;
-            }
-            return true;
-        }
-    }
-    return false;
 }
