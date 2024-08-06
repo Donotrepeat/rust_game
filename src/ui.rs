@@ -17,12 +17,14 @@ impl Player {
     pub fn drop_down(&mut self, ground: &[Ground], middel: &[Midde]) {
         if !self.on_block(ground) && !self.on_block_m(middel) {
             self.y += self.dy;
+        } else {
+            self.y -= self.dy;
         }
     }
     pub fn on_block(&mut self, ground: &[Ground]) -> bool {
         for i in ground {
             if ((self.x) >= (i.x - 4.0) && self.x <= (i.x + 14.0))
-                && (self.y >= -85.0 && self.y <= (i.hight as f64 * 10.0 - 83.2))
+                && (self.y >= -85.0 && self.y <= (i.hight as f64 * 10.0 - 82.5))
             {
                 // self.y = i.hight as f64 * 10.0 - 85.0;
                 self.dy = 0.0;
@@ -35,7 +37,7 @@ impl Player {
     pub fn nextto_block(&mut self, ground: &[Ground]) -> bool {
         for i in ground {
             if ((self.x) >= (i.x - 4.0) && self.x <= (i.x + 14.0))
-                && (self.y >= -85.0 && self.y <= (i.hight as f64 * 10.0 - 81.0))
+                && (self.y >= -85.0 && self.y <= (i.hight as f64 * 10.0 - 82.5))
             {
                 // if (self.x - (i.x - 3.0)).abs() < (self.x - (i.x + 13.0)).abs() {
                 //     self.x = i.x - 3.0;
@@ -53,13 +55,13 @@ impl Player {
                 && (self.y >= (i.level as f64 * 10.0 - 95.0)
                     && self.y <= (i.level as f64 * 10.0 - 75.0))
             {
-                if self.y > (i.level as f64 * 10.0 - 90.0) {
-                    self.y += 1.0;
-                } else if self.y <= (i.level as f64 * 10.0 - 90.0) {
-                    self.y -= 1.0;
-                }
-
-                self.dy = 0.0;
+                // if self.y > (i.level as f64 * 10.0 - 90.0) {
+                //     self.y += 1.0;
+                // } else if self.y <= (i.level as f64 * 10.0 - 90.0) {
+                //     self.y -= 1.0;
+                // }
+                //
+                // self.dy = 0.0;
                 return true;
             }
         }
@@ -72,11 +74,11 @@ impl Player {
                 && (self.y >= (i.level as f64 * 10.0 - 85.0)
                     && self.y <= (i.level as f64 * 10.0 - 75.0))
             {
-                if (self.x - (i.x - 5.0)) < ((i.x + 15.0) - self.x) {
-                    self.x = i.x - 6.0;
-                } else if (self.x - (i.x - 5.0)) >= ((i.x + 15.0) - self.x) {
-                    self.x = i.x + 16.0;
-                }
+                // if (self.x - (i.x - 5.0)) < ((i.x + 15.0) - self.x) {
+                //     self.x = i.x - 6.0;
+                // } else if (self.x - (i.x - 5.0)) >= ((i.x + 15.0) - self.x) {
+                //     self.x = i.x + 16.0;
+                // }
                 return true;
             }
         }

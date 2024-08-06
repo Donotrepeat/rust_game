@@ -79,18 +79,10 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
 
     let mut interval = interval(tick_rate);
 
-    let mut can_jump = true;
-
     loop {
         terminal.draw(|f| ui(f, player, &mut level.ground, &mut level.middle))?;
 
         let current_level = &array[level_index];
-        if (player.on_block(&current_level.ground) || player.on_block_m(&current_level.middle))
-            && !can_jump
-        {
-            can_jump = true;
-            player.dy = 0.0;
-        }
 
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
@@ -102,11 +94,9 @@ async fn run_app<B: Backend>(terminal: &mut Terminal<B>, player: &mut Player) ->
                     KeyCode::Up => {
                         if !player.on_block(&current_level.ground)
                             && !player.on_block_m(&current_level.middle)
-                            || (can_jump == true) && !jump
                         {
                             player.dy = 2.0;
                             jump = true;
-                            can_jump = false;
                             jump_count = count;
                         }
                     }
